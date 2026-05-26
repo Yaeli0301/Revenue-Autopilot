@@ -3,6 +3,8 @@ import { Suspense } from "react";
 import { isClerkConfigured } from "@/lib/clerk-config";
 import { getAuthContext } from "@/lib/app-auth";
 import { DevAuthPage } from "@/components/auth/dev-auth-page";
+import { AuthShell } from "@/components/auth/auth-shell";
+import { ClerkAuthPanel } from "@/components/auth/clerk-auth-panel";
 
 export default async function SignInPage() {
   if (!isClerkConfigured()) {
@@ -12,20 +14,16 @@ export default async function SignInPage() {
 
     return (
       <Suspense fallback={<p className="text-center p-8 text-muted-foreground">טוען...</p>}>
-        <DevAuthPage mode="sign-in" />
+        <AuthShell mode="sign-in">
+          <DevAuthPage mode="sign-in" />
+        </AuthShell>
       </Suspense>
     );
   }
-  const { SignIn } = await import("@clerk/nextjs");
 
   return (
-    <div className="flex min-h-screen items-center justify-center hero-glow">
-      <SignIn
-        routing="path"
-        path="/sign-in"
-        signUpUrl="/sign-up"
-        forceRedirectUrl="/onboarding"
-      />
-    </div>
+    <AuthShell mode="sign-in">
+      <ClerkAuthPanel mode="sign-in" />
+    </AuthShell>
   );
 }

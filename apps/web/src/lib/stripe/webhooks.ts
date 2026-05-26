@@ -1,6 +1,10 @@
 import { prisma } from "@revenue-autopilot/lib/db";
 import type Stripe from "stripe";
 import { syncOrganizationFromStripeSubscription } from "./subscription";
+import {
+  resolveOrganizationIdFromStripeInvoice,
+  upsertInvoiceFromStripe,
+} from "./invoices";
 
 export async function isWebhookProcessed(eventId: string): Promise<boolean> {
   const existing = await prisma.webhookEvent.findUnique({
@@ -45,6 +49,15 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
         ...subscription,
         metadata: { ...subscription.metadata, organizationId },
       });
+
+      const latestInvoices = await stripe.invoices.list({
+        subscription: subscription.id,
+        limit: 1,
+      });
+      const latestInvoice = latestInvoices.data[0];
+      if (latestInvoice) {
+        await upsertInvoiceFromStripe(latestInvoice, organizationId);
+      }
       break;
     }
 
@@ -77,6 +90,15 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
           entityId: subscription.id,
         },
       });
+      break;
+    }
+
+    case "invoice.paid":
+    case "invoice.finalized": {
+      const invoice = event.data.object as Stripe.Invoice;
+      const organizationId = await resolveOrganizationIdFromStripeInvoice(invoice);
+      if (!organizationId) break;
+      await upsertInvoiceFromStripe(invoice, organizationId);
       break;
     }
 

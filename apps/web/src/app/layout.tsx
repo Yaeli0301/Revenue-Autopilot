@@ -5,6 +5,7 @@ import { heIL } from "@clerk/localizations";
 import "@revenue-autopilot/ui/globals.css";
 import "./globals.css";
 import { isClerkConfigured } from "@/lib/clerk-config";
+import { clerkAppearance } from "@/lib/clerk-appearance";
 
 const heebo = Heebo({
   subsets: ["hebrew", "latin"],
@@ -42,7 +43,7 @@ export default function RootLayout({
   }
 
   return (
-    <ClerkProvider localization={heIL}>
+    <ClerkProvider localization={heIL} appearance={clerkAppearance}>
       <AppShell>{children}</AppShell>
     </ClerkProvider>
   );

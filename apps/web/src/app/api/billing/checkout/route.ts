@@ -70,6 +70,12 @@ export async function POST(req: Request) {
         metadata: { organizationId: org.id, planId: parsed.data.planId },
       },
       allow_promotion_codes: true,
+      tax_id_collection: { enabled: true },
+      customer_update: {
+        name: "auto",
+        address: "auto",
+      },
+      billing_address_collection: "required",
     });
 
     return NextResponse.json({ url: session.url });

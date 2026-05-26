@@ -77,21 +77,22 @@ export function DevAuthPage({ mode = "sign-up" }: Props) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center hero-glow p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-            <Zap className="h-6 w-6 text-white" />
-          </div>
-          <CardTitle>
-            {mode === "sign-up" ? "הפעילו את המערכת שלכם" : "כניסה למערכת"}
-          </CardTitle>
-          <CardDescription>
-            {preparing
-              ? "מכינים את המערכת שלכם…"
-              : "הזינו פרטים (אופציונלי) — ותיכנסו מיד"}
-          </CardDescription>
-        </CardHeader>
+    <Card className="w-full border-border/80 bg-card/95 backdrop-blur-xl shadow-2xl shadow-primary/10">
+      <CardHeader className="text-center pb-4">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/25">
+          <Zap className="h-6 w-6 text-white" />
+        </div>
+        <CardTitle className="text-xl">
+          {mode === "sign-up" ? "הפעילו את המערכת שלכם" : "כניסה למערכת"}
+        </CardTitle>
+        <CardDescription>
+          {preparing
+            ? "מכינים את המערכת שלכם…"
+            : mode === "sign-up"
+              ? "14 יום חינם — בלי כרטיס אשראי"
+              : "היכנסו עם האימייל שלכם"}
+        </CardDescription>
+      </CardHeader>
         <CardContent className="space-y-4">
           {error && (
             <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -156,6 +157,5 @@ export function DevAuthPage({ mode = "sign-up" }: Props) {
           )}
         </CardContent>
       </Card>
-    </div>
   );
 }

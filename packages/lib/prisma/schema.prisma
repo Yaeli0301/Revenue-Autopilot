@@ -75,6 +75,17 @@ enum SubscriptionStatus {
   TRIALING
 }
 
+enum InvoiceDocumentType {
+  TAX_INVOICE
+  RECEIPT
+}
+
+enum InvoiceDocumentStatus {
+  PAID
+  OPEN
+  VOID
+}
+
 model User {
   id        String   @id @default(cuid())
   clerkId   String   @unique
@@ -105,10 +116,15 @@ model Organization {
   stripeCustomerId String?          @unique
   stripeSubId      String?          @unique
   subStatus        SubscriptionStatus @default(TRIALING)
+  billingLegalName String?
+  billingTaxId     String?
+  billingAddress   String?
+  billingEmail     String?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
   memberships     Membership[]
+  invoices        Invoice[]
   customers       Customer[]
   appointments    Appointment[]
   messageSends    MessageSend[]
@@ -289,4 +305,31 @@ model WebhookEvent {
 
   @@unique([provider, eventId])
   @@index([provider, createdAt])
+}
+
+model Invoice {
+  id              String                @id @default(cuid())
+  organizationId  String
+  invoiceNumber   String
+  stripeInvoiceId String?               @unique
+  documentType    InvoiceDocumentType   @default(TAX_INVOICE)
+  status          InvoiceDocumentStatus @default(PAID)
+  issuedAt        DateTime
+  periodStart     DateTime?
+  periodEnd       DateTime?
+  subtotalAg      Int
+  vatAg           Int
+  totalAg         Int
+  currency        String                @default("ILS")
+  description     String
+  planLabel       String?
+  stripePdfUrl    String?
+  hostedUrl       String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, invoiceNumber])
+  @@index([organizationId, issuedAt])
 }

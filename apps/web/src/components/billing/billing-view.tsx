@@ -14,6 +14,7 @@ import {
 } from "@revenue-autopilot/ui";
 import { PLAN_LABELS, SUBSCRIPTION_STATUS_LABELS } from "@revenue-autopilot/lib";
 import { Loader2, CreditCard, Check, CheckCircle2, TrendingUp, AlertTriangle } from "lucide-react";
+import { InvoicesSection } from "./invoices-section";
 
 interface BillingInfo {
   active: boolean;
@@ -84,7 +85,7 @@ export function BillingView() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-5xl">
       {paymentSuccess && (
         <div className="rounded-lg bg-accent/15 border border-accent/30 p-4 flex items-start gap-3">
           <CheckCircle2 className="h-5 w-5 text-accent shrink-0 mt-0.5" />
@@ -216,6 +217,8 @@ export function BillingView() {
           </Card>
         ))}
       </div>
+
+      <InvoicesSection />
 
       <p className="text-center text-sm text-muted-foreground">
         <Link href="/dashboard" className="text-primary underline">
