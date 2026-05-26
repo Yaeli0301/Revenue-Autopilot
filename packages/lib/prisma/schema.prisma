@@ -1,0 +1,292 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  CANCELLED
+  NO_SHOW
+  COMPLETED
+  AT_RISK
+}
+
+enum MessageChannel {
+  WHATSAPP
+  SMS
+  EMAIL
+}
+
+enum MessageTemplate {
+  CONFIRM
+  CANCEL_SUCCESS
+  SLOT_AVAILABLE
+  SLOT_TAKEN
+  REMINDER_24H
+  REMINDER_3H
+}
+
+enum MessageStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  SKIPPED
+}
+
+enum IntegrationType {
+  GOOGLE_CALENDAR
+  STRIPE
+  TWILIO
+  RESEND
+}
+
+enum IndustryPreset {
+  DENTIST
+  SALON
+  CLINIC
+  FITNESS
+  CONSULTING
+  OTHER
+}
+
+enum SubscriptionPlan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  TRIALING
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships Membership[]
+  auditEvents AuditEvent[]
+
+  @@index([email])
+}
+
+model Organization {
+  id               String           @id @default(cuid())
+  clerkOrgId       String?          @unique
+  name             String
+  slug             String           @unique
+  industry         IndustryPreset   @default(OTHER)
+  avgPrice         Float            @default(200)
+  timezone         String           @default("Asia/Jerusalem")
+  quietHoursStart  Int              @default(22)
+  quietHoursEnd    Int              @default(8)
+  autopilotActive  Boolean          @default(false)
+  onboardingDone   Boolean          @default(false)
+  subscriptionPlan SubscriptionPlan @default(FREE)
+  stripeCustomerId String?          @unique
+  stripeSubId      String?          @unique
+  subStatus        SubscriptionStatus @default(TRIALING)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  memberships     Membership[]
+  customers       Customer[]
+  appointments    Appointment[]
+  messageSends    MessageSend[]
+  automationRules AutomationRule[]
+  integrations    Integration[]
+  auditEvents     AuditEvent[]
+  waitlistEntries WaitlistEntry[]
+
+  @@index([slug])
+}
+
+model Membership {
+  id             String         @id @default(cuid())
+  userId         String
+  organizationId String
+  role           MembershipRole @default(MEMBER)
+  createdAt      DateTime       @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+}
+
+model Customer {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  phone          String?
+  email          String?
+  whatsappOptIn  Boolean  @default(false)
+  externalId     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  appointments    Appointment[]
+  waitlistEntries WaitlistEntry[]
+
+  @@index([organizationId])
+  @@index([phone])
+  @@index([email])
+}
+
+model Appointment {
+  id             String            @id @default(cuid())
+  organizationId String
+  customerId     String
+  title          String
+  startTime      DateTime
+  endTime        DateTime
+  status         AppointmentStatus @default(SCHEDULED)
+  externalId     String?
+  calendarId     String?
+  price          Float?
+  confirmedAt    DateTime?
+  cancelledAt    DateTime?
+  notes          String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  messageSends MessageSend[]
+  slotClaim    SlotClaim?
+
+  @@unique([organizationId, externalId])
+  @@index([organizationId, startTime])
+  @@index([status])
+}
+
+model MessageSend {
+  id             String          @id @default(cuid())
+  organizationId String
+  appointmentId  String?
+  customerId     String?
+  channel        MessageChannel
+  template       MessageTemplate
+  status         MessageStatus   @default(PENDING)
+  dedupeKey      String          @unique
+  recipient      String
+  body           String
+  metadata       Json?
+  sentAt         DateTime?
+  error          String?
+  createdAt      DateTime        @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  appointment  Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([appointmentId])
+}
+
+model SlotClaim {
+  id            String   @id @default(cuid())
+  appointmentId String   @unique
+  customerId    String
+  claimedAt     DateTime @default(now())
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+}
+
+model WaitlistEntry {
+  id             String   @id @default(cuid())
+  organizationId String
+  customerId     String
+  priority       Int      @default(0)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, priority])
+}
+
+model AutomationRule {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  enabled        Boolean  @default(true)
+  reminder24h    Boolean  @default(true)
+  reminder3h     Boolean  @default(true)
+  autofillTopN   Int      @default(3)
+  config         Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model Integration {
+  id             String          @id @default(cuid())
+  organizationId String
+  type           IntegrationType
+  accessToken    String?
+  refreshToken   String?
+  tokenExpiresAt DateTime?
+  metadata       Json?
+  active         Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, type])
+}
+
+model AuditEvent {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String?
+  action         String
+  entityType     String?
+  entityId       String?
+  metadata       Json?
+  ipAddress      String?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+}
+
+model WebhookEvent {
+  id        String   @id @default(cuid())
+  provider  String
+  eventId   String
+  type      String
+  createdAt DateTime @default(now())
+
+  @@unique([provider, eventId])
+  @@index([provider, createdAt])
+}

@@ -1,0 +1,37 @@
+# dependencies
+node_modules
+.pnpm-store
+
+# build
+.next
+dist
+out
+build
+.turbo
+
+# env
+.env
+.env.local
+.env.*.local
+
+# debug
+npm-debug.log*
+pnpm-debug.log*
+
+# IDE
+.idea
+.vscode
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# prisma
+packages/lib/prisma/migrations/**/migration_lock.toml
+
+# test
+coverage
+
+# sentry
+.sentryclirc

@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: var(--font-heebo), system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .gradient-text {
+    @apply bg-gradient-to-l from-primary to-accent bg-clip-text text-transparent;
+  }
+
+  .hero-glow {
+    background: radial-gradient(
+      ellipse 80% 50% at 50% -20%,
+      hsl(247 100% 68% / 0.25),
+      transparent
+    );
+  }
+
+  .grid-pattern {
+    background-image: linear-gradient(
+        hsl(217 33% 17% / 0.5) 1px,
+        transparent 1px
+      ),
+      linear-gradient(90deg, hsl(217 33% 17% / 0.5) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+}
