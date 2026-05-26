@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@revenue-autopilot/lib/db";
+import type { Invoice } from "@revenue-autopilot/lib/db";
 import {
   formatIlsAg,
   formatInvoiceDate,
@@ -56,7 +57,7 @@ export async function GET(req: Request) {
     });
 
     return apiSuccess({
-      invoices: invoices.map((invoice) => ({
+      invoices: invoices.map((invoice: Invoice) => ({
         id: invoice.id,
         invoiceNumber: invoice.invoiceNumber,
         documentType: invoice.documentType,
